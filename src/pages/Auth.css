@@ -220,3 +220,41 @@
     padding: 25px 18px;
   }
 }
+
+/* Account Type Selection Box */
+
+.account-type-select {
+  width: 100%;
+  padding: 13px 16px;
+  margin: 8px 0 18px;
+
+  border: 2px solid #d5e5d5;
+  border-radius: 10px;
+
+  background-color: #f4faf4;
+  color: #245c35;
+
+  font-size: 16px;
+  font-weight: 600;
+
+  cursor: pointer;
+  outline: none;
+
+  transition: all 0.3s ease;
+}
+
+.account-type-select:hover {
+  border-color: #4caf50;
+  background-color: #edf7ed;
+}
+
+.account-type-select:focus {
+  border-color: #2e8b45;
+  box-shadow: 0 0 0 3px rgba(46, 139, 69, 0.15);
+}
+
+.account-type-select option {
+  background-color: white;
+  color: #245c35;
+  padding: 10px;
+}

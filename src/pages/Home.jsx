@@ -1,7 +1,10 @@
 
 import { Link } from "react-router-dom";
+import { getCurrentUser } from "../auth";
 
 function Home() {
+  const user = getCurrentUser();
+
   const services = [
     ["🌱", "Crop Guide", "/crop-guide", "Learn about crops and cultivation."],
     ["💰", "Market Prices", "/market-prices", "Explore agricultural market information."],
@@ -15,7 +18,6 @@ function Home() {
 
   return (
     <div className="container">
-
       <header className="header">
         <div className="logo">
           <img src="/logo.jpeg" alt="Farm Connect Logo" />
@@ -26,8 +28,16 @@ function Home() {
         </div>
 
         <div className="account">
-          <Link to="/login">Login</Link>
-          <Link to="/register">Register</Link>
+          {user ? (
+            <Link to={user.role === "admin" ? "/admin" : "/user"}>
+              {user.role === "admin" ? "Admin Dashboard" : "My Dashboard"}
+            </Link>
+          ) : (
+            <>
+              <Link to="/login">Login</Link>
+              <Link to="/register">Register</Link>
+            </>
+          )}
         </div>
       </header>
 
@@ -85,7 +95,6 @@ function Home() {
         <p>Your farming companion for a better tomorrow.</p>
         <p>Copyright © 2026 FarmConnect</p>
       </footer>
-
     </div>
   );
 }
