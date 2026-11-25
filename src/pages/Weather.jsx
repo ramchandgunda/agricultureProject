@@ -1,164 +1,318 @@
-
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-function Weather() {
+import {
+  savedLocation,
+  saveLocation,
+  lookup,
+  forecast,
+  notifyWeather
+} from "../services/weather";
 
-  const weatherUpdates = [
-    {
-      icon: "☀️",
-      title: "Sunny",
-      description:
-        "Suitable weather information for planning outdoor farming activities."
-    },
-    {
-      icon: "🌧️",
-      title: "Rain",
-      description:
-        "Rain information can help farmers plan irrigation and field activities."
-    },
-    {
-      icon: "🌡️",
-      title: "Temperature",
-      description:
-        "Temperature information can help farmers monitor crop conditions."
-    },
-    {
-      icon: "💨",
-      title: "Wind",
-      description:
-        "Wind conditions can be useful when planning agricultural activities."
+const describe = c =>
+  c === 0 ? "Clear sky" :
+  c <= 3 ? "Cloudy" :
+  c >= 95 ? "Thunderstorms" :
+  c >= 80 ? "Showers" :
+  c >= 71 ? "Snow" :
+  c >= 51 ? "Rain or drizzle" :
+  "Fog";
+
+export default function Weather() {
+  const [loc, setLoc] = useState(savedLocation);
+  const [city, setCity] = useState("");
+  const [choices, setChoices] = useState([]);
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [updated, setUpdated] = useState(null);
+
+  function choose(l) {
+    saveLocation(l);
+    setLoc(l);
+    setChoices([]);
+  }
+
+  function detect() {
+    if (!navigator.geolocation) {
+      setError("Location unavailable. Search for a town.");
+      return;
     }
-  ];
+
+    setBusy(true);
+
+    navigator.geolocation.getCurrentPosition(
+      p => {
+        choose({
+          latitude: p.coords.latitude,
+          longitude: p.coords.longitude,
+          name: "Your current location"
+        });
+
+        setBusy(false);
+      },
+      () => {
+        setBusy(false);
+
+        setError(
+          "Location permission unavailable. Search for your town instead."
+        );
+      },
+      {
+        timeout: 10000,
+        maximumAge: 300000
+      }
+    );
+  }
+
+  useEffect(() => {
+    if (!loc && navigator.permissions) {
+      navigator.permissions
+        .query({ name: "geolocation" })
+        .then(p => {
+          if (p.state === "granted") detect();
+        })
+        .catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!loc) return;
+
+    let stop = false;
+
+    setData(null);
+
+    async function refresh() {
+      setBusy(true);
+      setError("");
+
+      try {
+        const d = await forecast(loc);
+
+        if (!stop) {
+          setData(d);
+          setUpdated(new Date());
+          notifyWeather(loc, d);
+        }
+      } catch (e) {
+        if (!stop) setError(e.message);
+      } finally {
+        if (!stop) setBusy(false);
+      }
+    }
+
+    refresh();
+
+    const timer = setInterval(
+      refresh,
+      30 * 60 * 1000
+    );
+
+    return () => {
+      stop = true;
+      clearInterval(timer);
+    };
+  }, [loc]);
+
+  async function search(e) {
+    e.preventDefault();
+
+    setBusy(true);
+    setError("");
+
+    try {
+      const results = await lookup(city);
+
+      setChoices(results);
+
+      if (!results.length) {
+        setError("No matching towns found.");
+      }
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
-    <div className="container">
+    <main className="feature-page fc-weather">
 
-      {/* HEADER */}
+      <div className="feature-heading">
+        <span className="eyebrow">
+          FIELD INTELLIGENCE
+        </span>
 
-      <header className="header">
-
-        <div className="logo">
-
-          <img
-            src="/logo.jpeg"
-            alt="Farm Connect Logo"
-          />
-
-          <div>
-            <h2>Farm Connect</h2>
-            <small>Farmer Friendly Portal</small>
-          </div>
-
-        </div>
-
-        <div className="search">
-
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Search..."
-          />
-
-          <button id="searchBtn">
-            Search
-          </button>
-
-        </div>
-
-        <div className="account">
-
-          <Link to="/login">Login</Link>
-
-          <Link to="/register">Register</Link>
-
-        </div>
-
-      </header>
-
-
-      {/* CATEGORY MENU */}
-
-      <nav className="categories">
-
-        <Link to="/">Home</Link>
-
-        <Link to="/crop-guide">Crop Guide</Link>
-
-        <Link to="/market-prices">Market Prices</Link>
-
-        <Link to="/government-schemes">
-          Government Schemes
-        </Link>
-
-        <Link to="/weather">Weather</Link>
-
-        <Link to="/expert-help">Expert Help</Link>
-
-      </nav>
-
-
-      {/* WEATHER UPDATES */}
-
-      <section className="dashboard">
-
-        <h1>🌦️ Weather Updates</h1>
+        <h1>Weather for your farm</h1>
 
         <p>
-          Weather information can help farmers plan agricultural
-          activities.
+          Location-based forecasts, refreshed automatically
+          every 30 minutes while the website is open.
         </p>
+      </div>
 
+      <form
+        className="store-toolbar"
+        onSubmit={search}
+      >
+        <input
+          value={city}
+          onChange={e => setCity(e.target.value)}
+          placeholder="Search town or district in India"
+          required
+        />
 
-        <div className="dashboard-grid">
+        <button
+          className="fc-action"
+          disabled={busy}
+        >
+          Search
+        </button>
 
-          {weatherUpdates.map((weather, index) => (
+        <button
+          type="button"
+          className="fc-action secondary"
+          onClick={detect}
+        >
+          ◎ Use my location
+        </button>
+      </form>
 
-            <div className="dashboard-card" key={index}>
+      {choices.map(l => (
+        <button
+          className="fc-action secondary"
+          key={l.latitude + ":" + l.longitude}
+          onClick={() => choose(l)}
+        >
+          {l.name}
+        </button>
+      ))}
 
-              <h3>
-                {weather.icon} {weather.title}
-              </h3>
+      {busy && <p>Updating weather…</p>}
 
-              <p>
-                {weather.description}
-              </p>
+      {error && <p role="alert">{error}</p>}
+
+      {!loc && (
+        <p>
+          Choose a location once to enable
+          automatic forecasts.
+        </p>
+      )}
+
+      {data && (
+        <>
+          <section className="weather-now">
+
+            <small>
+              LOCAL FORECAST · {loc.name}
+            </small>
+
+            <h2>
+              {Math.round(
+                data.current.temperature_2m
+              )}°C
+            </h2>
+
+            <p>
+              {describe(data.current.weather_code)}
+            </p>
+
+            <div className="weather-metrics">
+
+              <span>
+                Humidity
+                <b>
+                  {data.current.relative_humidity_2m}%
+                </b>
+              </span>
+
+              <span>
+                Wind
+                <b>
+                  {data.current.wind_speed_10m} km/h
+                </b>
+              </span>
+
+              <span>
+                Precipitation
+                <b>
+                  {data.current.precipitation} mm
+                </b>
+              </span>
 
             </div>
 
-          ))}
+            <small>
+              Updated {updated?.toLocaleString()}
+            </small>
 
-        </div>
+          </section>
 
+          <h2 className="fc-week-title">
+            7-day outlook
+          </h2>
 
-        <br />
+          <div className="forecast-grid">
 
-        <Link to="/">
-          <button>
-            ← Back to Home
-          </button>
-        </Link>
+            {data.daily.time.map((day, i) => (
+              <article key={day}>
 
-      </section>
+                <b>{day}</b>
 
+                <span>
+                  {describe(
+                    data.daily.weather_code[i]
+                  )}
+                </span>
 
-      {/* FOOTER */}
+                <strong>
+                  {data.daily.temperature_2m_max[i]}° /
+                  {data.daily.temperature_2m_min[i]}°
+                </strong>
 
-      <footer className="footer">
+                <small>
+                  Rain chance:{" "}
+                  {data.daily.precipitation_probability_max[i] ?? "—"}%
+                </small>
 
-        <h3>Farm Connect</h3>
+              </article>
+            ))}
 
-        <p>
-          Farmer Friendly Portal for useful agricultural information.
-        </p>
+          </div>
+        </>
+      )}
 
-        <p>
-          Copyright © 2026 FarmConnect
-        </p>
+      <p className="store-disclaimer">
+        Forecast:{" "}
 
-      </footer>
+        <a
+          href="https://open-meteo.com/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Open-Meteo
+        </a>.
 
-    </div>
+        For official warnings consult{" "}
+
+        <a
+          href="https://mausam.imd.gov.in/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          IMD
+        </a>.
+
+        Alerts are forecast-based, not official
+        warnings. Automatic checking requires an
+        open browser tab.
+      </p>
+
+      <Link className="feature-back" to="/user">
+        ← Dashboard
+      </Link>
+
+    </main>
   );
 }
-
-export default Weather;

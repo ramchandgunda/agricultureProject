@@ -4,14 +4,21 @@ const ADMIN_REGISTRATION_CODE = "FARMADMIN2026";
 
 function readUsers() {
   try {
-    return JSON.parse(localStorage.getItem("users") || "[]");
+    return JSON.parse(
+      localStorage.getItem("users") || "[]"
+    );
   } catch {
     return [];
   }
 }
 
-export function registerUser(user, role = "user", adminCode = "") {
+export function registerUser(
+  user,
+  role = "user",
+  adminCode = ""
+) {
   const users = readUsers();
+
   const email = user.email.trim().toLowerCase();
 
   if (!["user", "admin"].includes(role)) {
@@ -20,12 +27,15 @@ export function registerUser(user, role = "user", adminCode = "") {
 
   if (
     email === ADMIN_EMAIL ||
-    users.some((u) => u.email.toLowerCase() === email)
+    users.some(u => u.email.toLowerCase() === email)
   ) {
     return "Email already registered!";
   }
 
-  if (role === "admin" && adminCode !== ADMIN_REGISTRATION_CODE) {
+  if (
+    role === "admin" &&
+    adminCode !== ADMIN_REGISTRATION_CODE
+  ) {
     return "Invalid Admin Registration Code!";
   }
 
@@ -37,11 +47,19 @@ export function registerUser(user, role = "user", adminCode = "") {
     role
   });
 
-  localStorage.setItem("users", JSON.stringify(users));
+  localStorage.setItem(
+    "users",
+    JSON.stringify(users)
+  );
+
   return "Registration successful!";
 }
 
-export function loginUser(email, password, selectedRole = "user") {
+export function loginUser(
+  email,
+  password,
+  selectedRole = "user"
+) {
   const cleanEmail = email.trim().toLowerCase();
 
   if (
@@ -55,12 +73,16 @@ export function loginUser(email, password, selectedRole = "user") {
       role: "admin"
     };
 
-    localStorage.setItem("currentUser", JSON.stringify(admin));
+    localStorage.setItem(
+      "currentUser",
+      JSON.stringify(admin)
+    );
+
     return admin;
   }
 
   const user = readUsers().find(
-    (u) =>
+    u =>
       u.email.toLowerCase() === cleanEmail &&
       u.password === password &&
       u.role === selectedRole
@@ -68,13 +90,21 @@ export function loginUser(email, password, selectedRole = "user") {
 
   if (!user) return null;
 
-  localStorage.setItem("currentUser", JSON.stringify(user));
-  return user;
+  const { password: omitted, ...session } = user;
+
+  localStorage.setItem(
+    "currentUser",
+    JSON.stringify(session)
+  );
+
+  return session;
 }
 
 export function getCurrentUser() {
   try {
-    return JSON.parse(localStorage.getItem("currentUser") || "null");
+    return JSON.parse(
+      localStorage.getItem("currentUser") || "null"
+    );
   } catch {
     return null;
   }
@@ -85,15 +115,22 @@ export function logoutUser() {
 }
 
 export function getRegisteredFarmers() {
-  return readUsers().filter((u) => u.role === "user");
+  return readUsers().filter(
+    u => u.role === "user"
+  );
 }
 
 export function deleteFarmer(email) {
   const users = readUsers().filter(
-    (u) => u.email.toLowerCase() !== email.toLowerCase()
+    u =>
+      u.role !== "user" ||
+      u.email.toLowerCase() !== email.toLowerCase()
   );
 
-  localStorage.setItem("users", JSON.stringify(users));
+  localStorage.setItem(
+    "users",
+    JSON.stringify(users)
+  );
 
-  return users.filter((u) => u.role === "user");
+  return users.filter(u => u.role === "user");
 }

@@ -1621,3 +1621,78 @@ tr:last-child td {
     font-size: 10px;
   }
 }
+
+
+.government-ticker {
+  width: 100%;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: #123f2d;
+  color: white;
+}
+
+.ticker-label {
+  flex-shrink: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  background: #a6d785;
+  color: #123f2d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  z-index: 2;
+}
+
+.ticker-window {
+  flex: 1;
+  overflow: hidden;
+}
+
+.ticker-track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: governmentScroll 32s linear infinite;
+}
+
+.ticker-track a {
+  flex-shrink: 0;
+  padding: 0 28px;
+  color: white;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.ticker-track a:hover {
+  color: #b9ed91;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+.ticker-track a span {
+  color: #b9ed91;
+}
+
+@keyframes governmentScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none;
+  }
+}

@@ -1,0 +1,495 @@
+/* FARM CONNECT PROFESSIONAL EDITION */
+
+.fc-topbar {
+  display: flex;
+  align-items: center;
+  background: #082f25;
+  color: #fff;
+  position: relative;
+  z-index: 1200;
+  min-height: 48px;
+  padding: 0 16px;
+  gap: 14px;
+}
+
+/* GOVERNMENT SCROLLING BAR */
+
+.fc-ticker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.fc-ticker-label {
+  white-space: nowrap;
+  color: #c6efd5;
+  font-size: 12px;
+  font-weight: 750;
+  border-right: 1px solid #ffffff30;
+  padding-right: 14px;
+}
+
+.fc-ticker-window {
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+.fc-ticker-track {
+  display: flex;
+  width: max-content;
+  animation: fc-scroll 40s linear infinite;
+}
+
+.fc-ticker-track a {
+  display: block;
+  padding: 12px 24px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.fc-ticker-track a span {
+  color: #82dbad;
+}
+
+.fc-ticker-track:hover,
+.fc-ticker-track:focus-within,
+.fc-ticker-track.paused {
+  animation-play-state: paused;
+}
+
+.fc-ticker button,
+.fc-bell {
+  background: #ffffff15;
+  color: white;
+  border: 1px solid #ffffff30;
+  border-radius: 10px;
+  padding: 8px;
+  cursor: pointer;
+}
+
+@keyframes fc-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* NOTIFICATION CENTRE */
+
+.fc-notify {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.fc-bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+.fc-bell b {
+  position: absolute;
+  right: -6px;
+  top: -6px;
+  background: #f0ca72;
+  color: #163929;
+  border-radius: 20px;
+  font-size: 10px;
+  padding: 2px 5px;
+}
+
+.fc-notify-panel {
+  position: absolute;
+  right: 0;
+  top: 48px;
+  width: min(390px, 92vw);
+  max-height: 75vh;
+  overflow: auto;
+  background: #fff;
+  color: #163929;
+  border: 1px solid #dce9e0;
+  border-radius: 18px;
+  box-shadow: 0 20px 70px #082f2540;
+  padding: 20px;
+}
+
+.fc-notify-panel header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.fc-notify-panel header button,
+.fc-notify-panel summary {
+  color: #087f5b;
+  cursor: pointer;
+}
+
+.fc-notify-panel header button {
+  background: #eaf5ed;
+  border: 0;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.fc-notify-panel small {
+  display: block;
+  color: #62786a;
+  font-size: 12px;
+}
+
+.fc-notify-panel details {
+  padding: 14px 0;
+}
+
+.fc-notify-panel details label {
+  display: block;
+  margin: 8px 0;
+}
+
+.fc-notify-panel article {
+  display: flex;
+  gap: 12px;
+  border-top: 1px solid #e7eee8;
+  padding: 12px 0;
+}
+
+.fc-notify-panel article > span {
+  color: #14815b;
+}
+
+.fc-notify-panel article.read {
+  opacity: .65;
+}
+
+.fc-notify-panel article p {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.fc-notify-panel > a {
+  display: block;
+  margin: 12px 0;
+  color: #087f5b;
+}
+
+/* FEATURE PAGES */
+
+.feature-page {
+  max-width: 1220px;
+  margin: auto;
+  padding: 34px 24px 60px;
+}
+
+.feature-heading {
+  background: linear-gradient(
+    115deg, #073b2b, #087f5b
+  );
+  border-radius: 24px;
+  padding: 38px;
+  color: #fff;
+  margin-bottom: 24px;
+}
+
+.feature-heading h1 {
+  color: white;
+  font-size: clamp(28px, 4vw, 44px);
+  margin: 10px 0;
+}
+
+.feature-heading p,
+.feature-heading .eyebrow {
+  color: #d0efdf;
+}
+
+.store-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+  align-items: center;
+}
+
+.store-toolbar input {
+  flex: 1;
+  min-width: 180px;
+  border: 1px solid #ccdcd0;
+  padding: 13px;
+  border-radius: 10px;
+}
+
+.fc-action,
+.store-card-bottom button {
+  background: #087f5b;
+  color: white;
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 18px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.fc-action.secondary {
+  background: #e0f1e7;
+  color: #07553e;
+}
+
+/* AUTOMATIC WEATHER */
+
+.weather-now {
+  background: linear-gradient(
+    120deg, #073b2b, #087f5b
+  );
+  color: white;
+  border-radius: 20px;
+  padding: 28px;
+  margin-top: 20px;
+}
+
+.weather-now h2 {
+  color: white;
+  font-size: 56px;
+  margin: 12px 0;
+}
+
+.weather-now p,
+.weather-now small {
+  color: #d5f0e0;
+}
+
+.weather-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin: 20px 0;
+}
+
+.weather-metrics b {
+  display: block;
+  font-size: 19px;
+}
+
+.fc-week-title {
+  margin: 28px 0 15px;
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(125px, 1fr));
+  gap: 12px;
+}
+
+.forecast-grid article,
+.store-card,
+.atlas-panel,
+.state-detail,
+.route-section {
+  background: white;
+  border: 1px solid #dce9e0;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.forecast-grid article {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.store-disclaimer {
+  font-size: 13px;
+  margin: 24px 0;
+  color: #586e60;
+}
+
+.store-disclaimer a,
+.feature-back {
+  color: #087f5b;
+  text-decoration: underline;
+}
+
+/* FARM STORE */
+
+.product-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(250px, 1fr));
+  gap: 18px;
+}
+
+.store-product-art {
+  background: #e7f4e9;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  height: 120px;
+  font-size: 55px;
+}
+
+.store-card h3 {
+  margin: 10px 0;
+}
+
+.store-category {
+  color: #087f5b;
+  font-size: 12px;
+}
+
+.store-card-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.store-categories,
+.crop-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.store-categories button,
+.state-grid button,
+.route-list button {
+  border: 1px solid #dce9e0;
+  background: #fff;
+  border-radius: 9px;
+  padding: 10px;
+  color: #164c36;
+  cursor: pointer;
+}
+
+.store-categories button.active,
+.state-grid button.selected,
+.route-list button.active {
+  background: #087f5b;
+  color: white;
+}
+
+/* INDIA CROP ATLAS */
+
+.atlas-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 18px;
+}
+
+.state-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.crop-tags span {
+  padding: 8px;
+  background: #e7f4e9;
+  border-radius: 20px;
+}
+
+.route-section {
+  margin-top: 20px;
+}
+
+.route-list {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.route-list button small {
+  display: block;
+}
+
+.route-highlight {
+  background: #e7f4e9;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+/* HOMEPAGE AND DASHBOARDS */
+
+.container .hero {
+  background: linear-gradient(
+    95deg, #073b2bef, #087f5b70
+  ), url("./assets/hero.png") center / cover;
+
+  min-height: 350px;
+}
+
+.dashboard-card,
+.farmer-crop-card,
+.service-tile {
+  transition: transform .2s, box-shadow .2s;
+}
+
+.dashboard-card:hover,
+.farmer-crop-card:hover,
+.service-tile:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px #082f2518;
+}
+
+.admin-sidebar {
+  top: 48px !important;
+}
+
+.admin-shell {
+  min-height: calc(100vh - 48px);
+}
+
+/* RESPONSIVE DESIGN */
+
+@media (max-width: 650px) {
+  .fc-ticker-label {
+    font-size: 10px;
+    max-width: 90px;
+    white-space: normal;
+  }
+
+  .fc-topbar {
+    padding: 0 8px;
+    gap: 6px;
+  }
+
+  .atlas-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-heading {
+    padding: 24px;
+  }
+
+  .feature-page {
+    padding: 20px 14px;
+  }
+
+  .fc-notify-panel {
+    right: 0;
+  }
+
+  .weather-metrics {
+    gap: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fc-ticker-track {
+    animation: none;
+  }
+
+  .fc-ticker-window {
+    overflow-x: auto;
+  }
+}

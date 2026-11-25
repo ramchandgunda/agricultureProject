@@ -22,6 +22,12 @@ import Fertilizers from "./pages/Fertilizers";
 import GovernmentSchemes from "./pages/GovernmentSchemes";
 import MarketPrices from "./pages/MarketPrices";
 import Weather from "./pages/Weather";
+import FarmStore from "./pages/FarmStore";
+import IndiaCropMap from "./pages/IndiaCropMap";
+
+import GovernmentTicker from "./components/GovernmentTicker";
+import NotificationCenter from "./components/NotificationCenter";
+import WeatherMonitor from "./components/WeatherMonitor";
 
 function ProtectedRoute({ role }) {
   const current = getCurrentUser();
@@ -45,7 +51,16 @@ function ProtectedRoute({ role }) {
 export default function App() {
   return (
     <BrowserRouter>
+
+      <WeatherMonitor />
+
+      <div className="fc-topbar">
+        <GovernmentTicker />
+        <NotificationCenter />
+      </div>
+
       <Routes>
+
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -55,22 +70,38 @@ export default function App() {
         </Route>
 
         <Route element={<ProtectedRoute role="user" />}>
+
           <Route path="/user" element={<User />} />
+
           <Route path="/crop-guide" element={<CropGuide />} />
+
           <Route path="/expert-help" element={<ExpertHelp />} />
+
           <Route path="/farmer-alerts" element={<FarmerAlerts />} />
+
           <Route path="/farmer-community" element={<FarmerCommunity />} />
+
           <Route path="/fertilizers" element={<Fertilizers />} />
+
           <Route
             path="/government-schemes"
             element={<GovernmentSchemes />}
           />
+
           <Route path="/market-prices" element={<MarketPrices />} />
+
           <Route path="/weather" element={<Weather />} />
+
+          <Route path="/farm-store" element={<FarmStore />} />
+
+          <Route path="/india-crop-map" element={<IndiaCropMap />} />
+
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
+
     </BrowserRouter>
   );
 }
