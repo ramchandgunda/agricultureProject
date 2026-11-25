@@ -1,10 +1,9 @@
-
 import { useState } from "react";
-import { registerUser } from "../auth";
 import { Link, useNavigate } from "react-router-dom";
+import { registerUser } from "../auth";
 import "./Auth.css";
 
-function Register() {
+export default function Register() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState("user");
@@ -17,180 +16,147 @@ function Register() {
     mobile: ""
   });
 
-  function handleSubmit(e) {
+  const [error, setError] = useState("");
+
+  const update = (e) => {
+    setForm({
+      ...form,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  function submit(e) {
     e.preventDefault();
 
     const result = registerUser(form, role, adminCode);
 
-    alert(result);
-
-    if (result === "Registration successful!") {
-      navigate("/login");
+    if (result !== "Registration successful!") {
+      setError(result);
+      return;
     }
+
+    navigate("/login", {
+      state: { registered: true }
+    });
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-
+    <main className="auth-page">
+      <section className="auth-container">
         <div className="auth-banner">
-          <div className="auth-brand">
-            <span className="brand-icon">🌱</span>
-            <h2>Farm Connect</h2>
-          </div>
+          <Link to="/" className="auth-brand">
+            <span>🌱</span>
+            <b>Farm Connect</b>
+          </Link>
 
           <div className="banner-content">
-            <h1>Join Farm Connect!</h1>
+            <span className="welcome-tag">JOIN THE NETWORK</span>
+            <h1>Better farming starts with better connections.</h1>
             <p>
-              Create your account and access agricultural
-              services and management features.
+              Create your account to access practical agricultural
+              resources and updates.
             </p>
-
-            <div className="farm-illustration">
-              🌾 🚜 🌳
-            </div>
-
-            <h3>Growing Together, Growing Better.</h3>
+            <div className="farm-illustration">🌾　🚜　🌳</div>
+            <h3>Empowering farmers, building futures.</h3>
           </div>
 
-          <p className="banner-footer">
-            Your trusted agricultural partner.
-          </p>
+          <small className="banner-footer">
+            Your trusted agricultural companion.
+          </small>
         </div>
 
         <div className="auth-form-section">
-          <div className="auth-form-content">
-
-            <h2>Create Account</h2>
-
+          <form className="auth-form-content" onSubmit={submit}>
+            <span className="eyebrow">GET STARTED</span>
+            <h2>Create your account</h2>
             <p className="auth-subtitle">
-              Select your account type to continue.
+              Choose an account type and fill in your details.
             </p>
 
-            <form onSubmit={handleSubmit}>
+            <label>Register as</label>
+            <select
+              value={role}
+              onChange={(e) => {
+                setRole(e.target.value);
+                setAdminCode("");
+                setError("");
+              }}
+            >
+              <option value="user">Farmer / User</option>
+              <option value="admin">Administrator</option>
+            </select>
 
-              {/* Account Type Selection */}
-              <label>Register As</label>
+            <label>Full name</label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={update}
+              placeholder="Your full name"
+              required
+            />
 
-              <select
-                className="account-type-select"
-                value={role}
-                onChange={(e) => {
-                  setRole(e.target.value);
-                  setAdminCode("");
-                }}
-                required
-              >
-                <option value="user">🌱 Farmer / User</option>
-                <option value="admin">🛡️ Administrator</option>
-              </select>
+            <label>Email address</label>
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={update}
+              placeholder="you@example.com"
+              required
+            />
 
-              {/* Full Name */}
-              <label>Full Name</label>
+            <label>Password</label>
+            <input
+              name="password"
+              type="password"
+              minLength="6"
+              value={form.password}
+              onChange={update}
+              placeholder="At least 6 characters"
+              required
+            />
 
-              <input
-                type="text"
-                placeholder="Enter your full name"
-                value={form.name}
-                onChange={(e) =>
-                  setForm({ ...form, name: e.target.value })
-                }
-                required
-              />
+            <label>Mobile number</label>
+            <input
+              name="mobile"
+              type="tel"
+              pattern="[0-9]{10}"
+              maxLength="10"
+              value={form.mobile}
+              onChange={update}
+              placeholder="10-digit mobile number"
+              required
+            />
 
-              {/* Email */}
-              <label>Email Address</label>
+            {role === "admin" && (
+              <>
+                <label>Admin registration code</label>
+                <input
+                  type="password"
+                  value={adminCode}
+                  onChange={(e) => setAdminCode(e.target.value)}
+                  placeholder="Enter administrator code"
+                  required
+                />
+              </>
+            )}
 
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={form.email}
-                onChange={(e) =>
-                  setForm({ ...form, email: e.target.value })
-                }
-                required
-              />
+            {error && <p className="form-error">{error}</p>}
 
-              {/* Password */}
-              <label>Password</label>
-
-              <input
-                type="password"
-                placeholder="Create a password"
-                value={form.password}
-                onChange={(e) =>
-                  setForm({ ...form, password: e.target.value })
-                }
-                minLength="6"
-                required
-              />
-
-              {/* Mobile */}
-              <label>Mobile Number</label>
-
-              <input
-                type="tel"
-                placeholder="Enter your mobile number"
-                value={form.mobile}
-                onChange={(e) =>
-                  setForm({ ...form, mobile: e.target.value })
-                }
-                pattern="[0-9]{10}"
-                maxLength="10"
-                required
-              />
-
-              {/* Admin Registration Code */}
-              {role === "admin" && (
-                <>
-                  <label>Admin Registration Code</label>
-
-                  <input
-                    type="password"
-                    placeholder="Enter admin registration code"
-                    value={adminCode}
-                    onChange={(e) =>
-                      setAdminCode(e.target.value)
-                    }
-                    required
-                  />
-
-                  <p className="auth-subtitle">
-                    Enter the authorized code to create
-                    an administrator account.
-                  </p>
-                </>
-              )}
-
-              {/* Submit */}
-              <button type="submit" className="auth-button">
-                {role === "admin"
-                  ? "Create Admin Account →"
-                  : "Create Farmer Account →"}
-              </button>
-
-            </form>
+            <button className="auth-button" type="submit">
+              Create account →
+            </button>
 
             <p className="auth-switch">
-              Already have an account?{" "}
-              <Link to="/login">Login</Link>
-            </p>
-
-            <p className="auth-switch">
-              Already an administrator?{" "}
-              <Link to="/login">Admin Login</Link>
+              Already registered? <Link to="/login">Sign in</Link>
             </p>
 
             <Link to="/" className="back-home">
-              ← Back to Home
+              ← Back to home
             </Link>
-
-          </div>
+          </form>
         </div>
-
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
-
-export default Register;

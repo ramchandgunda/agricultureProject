@@ -1,507 +1,747 @@
-
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
+  deleteFarmer,
   getCurrentUser,
   getRegisteredFarmers,
-  deleteFarmer,
   logoutUser
 } from "../auth";
-import { useNavigate, Navigate } from "react-router-dom";
-import "./Dashboard.css";
 
-const readData = (key) =>
-  JSON.parse(localStorage.getItem(key) || "[]");
+const sections = [
+  ["overview", "▦", "Overview"],
+  ["farmers", "♙", "Farmers"],
+  ["crops", "❀", "Crop library"],
+  ["prices", "₹", "Market prices"],
+  ["schemes", "▤", "Schemes"],
+  ["alerts", "⚑", "Farmer alerts"]
+];
 
-function Admin() {
+const store = (key, value) =>
+  localStorage.setItem(key, JSON.stringify(value));
+
+const load = (key) => {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch {
+    return [];
+  }
+};
+
+export default function Admin() {
   const navigate = useNavigate();
-  const user = getCurrentUser();
+  const admin = getCurrentUser();
 
-  const [section, setSection] = useState("dashboard");
-  const [farmers, setFarmers] = useState(getRegisteredFarmers());
+  const [active, setActive] = useState("overview");
+  const [farmers, setFarmers] = useState([]);
+  const [crops, setCrops] = useState([]);
+  const [prices, setPrices] = useState([]);
+  const [schemes, setSchemes] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [query, setQuery] = useState("");
+  const [notice, setNotice] = useState("");
+  const [form, setForm] = useState({});
 
-  const [crops, setCrops] = useState(() => readData("farmCrops"));
-  const [prices, setPrices] = useState(() => readData("marketPrices"));
-  const [schemes, setSchemes] = useState(() => readData("farmSchemes"));
-  const [alerts, setAlerts] = useState(() => readData("farmAlerts"));
-  const [queries, setQueries] = useState(() => readData("expertQueries"));
-
-  const [editId, setEditId] = useState(null);
-
-  const emptyForm = {
-    name: "", category: "", season: "", price: "",
-    crop: "", market: "", date: "",
-    title: "", description: "", eligibility: "",
-    message: "", reply: ""
-  };
-
-  const [form, setForm] = useState(emptyForm);
-
-  if (!user || user.role !== "admin") {
-    return <Navigate to="/login" replace />;
+  function refresh() {
+    setFarmers(getRegisteredFarmers());
+    setCrops(load("farmCrops"));
+    setPrices(load("marketPrices"));
+    setSchemes(load("farmSchemes"));
+    setAlerts(load("farmAlerts"));
   }
 
-  const menus = [
-    ["dashboard", "Dashboard", "layout-dashboard"],
-    ["farmers", "Manage Farmers", "users"],
-    ["crops", "Manage Crops", "sprout"],
-    ["prices", "Market Prices", "indian-rupee"],
-    ["schemes", "Government Schemes", "landmark"],
-    ["alerts", "Farmer Alerts", "bell"],
-    ["reports", "Dashboard Reports", "chart-no-axes-column-increasing"],
-    ["queries", "Expert Queries", "messages-square"]
-  ];
-
-  function save(key, data, setter) {
-    localStorage.setItem(key, JSON.stringify(data));
-    setter(data);
-  }
-
-  function resetForm() {
-    setForm(emptyForm);
-    setEditId(null);
-  }
-
-  function openSection(name) {
-    setSection(name);
-    resetForm();
-
-    if (name === "farmers") {
-      setFarmers(getRegisteredFarmers());
+  useEffect(() => {
+    if (!admin || admin.role !== "admin") {
+      navigate("/login", { replace: true });
+      return;
     }
-  }
+    refresh();
+  }, []);
 
-  function submitRecord(e) {
-    e.preventDefault();
+  function saveRecord(key, list, setter, fields) {
+    if (fields.some((f) => !String(form[f] || "").trim())) {
+      setNotice("Please complete all fields.");
+      return;
+    }
 
-    const configs = {
-      crops: {
-        key: "farmCrops", setter: setCrops,
-        numberFields: ["price"]
-      },
-      prices: {
-        key: "marketPrices", setter: setPrices,
-        numberFields: ["price"]
-      },
-      schemes: {
-        key: "farmSchemes", setter: setSchemes,
-        numberFields: []
-      },
-      alerts: {
-        key: "farmAlerts", setter: setAlerts,
-        numberFields: []
+    const next = [
+      ...list,
+      {
+        ...form,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString()
       }
-    };
+    ];
 
-    const config = configs[section];
-    if (!config) return;
-
-    const oldData = {
-      crops, prices, schemes, alerts
-    }[section];
-
-    const record = { ...form };
-
-    config.numberFields.forEach((field) => {
-      record[field] = Number(record[field]);
-    });
-
-    let updated;
-
-    if (editId !== null) {
-      updated = oldData.map(item =>
-        item.id === editId ? { ...item, ...record } : item
-      );
-    } else {
-      updated = [...oldData, {
-        id: Date.now(),
-        ...record
-      }];
-    }
-
-    save(config.key, updated, config.setter);
-    alert(editId !== null ? "Record updated!" : "Record added!");
-    resetForm();
+    store(key, next);
+    setter(next);
+    setForm({});
+    setNotice("Information published successfully.");
   }
 
-  function editRecord(item) {
-    setForm({ ...emptyForm, ...item });
-    setEditId(item.id);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function removeRecord(id) {
-    if (!window.confirm("Are you sure you want to delete this record?")) return;
-
-    const configs = {
-      crops: ["farmCrops", crops, setCrops],
-      prices: ["marketPrices", prices, setPrices],
-      schemes: ["farmSchemes", schemes, setSchemes],
-      alerts: ["farmAlerts", alerts, setAlerts]
-    };
-
-    const [key, data, setter] = configs[section];
-    save(key, data.filter(item => item.id !== id), setter);
-
-    if (editId === id) resetForm();
+  function removeRecord(key, list, setter, id) {
+    const next = list.filter((item) => item.id !== id);
+    store(key, next);
+    setter(next);
+    setNotice("Record deleted successfully.");
   }
 
   function removeFarmer(email) {
-    if (window.confirm("Delete this farmer account?")) {
-      setFarmers(deleteFarmer(email));
-    }
+    if (!window.confirm(`Delete farmer account ${email}?`)) return;
+    setFarmers(deleteFarmer(email));
+    setNotice("Farmer account deleted.");
   }
 
-  function replyToQuery(id) {
-    const updated = queries.map(q =>
-      q.id === id
-        ? { ...q, reply: form.reply, status: "Answered" }
-        : q
-    );
-
-    save("expertQueries", updated, setQueries);
-    resetForm();
-    alert("Reply sent successfully!");
-  }
-
-  function logout() {
+  function signOut() {
     logoutUser();
     navigate("/login");
   }
 
-  function renderForm(title, fields) {
-    return (
-      <form className="management-form" onSubmit={submitRecord}>
-        <h3>{editId !== null ? "Edit " + title : "Add " + title}</h3>
+  const filteredFarmers = useMemo(
+    () =>
+      farmers.filter((f) =>
+        `${f.name} ${f.email}`.toLowerCase().includes(query.toLowerCase())
+      ),
+    [farmers, query]
+  );
 
-        {fields.map(field => (
-          <div key={field.name} className="form-group">
-            <label>{field.label}</label>
-            {field.options ? (
-              <select
-                value={form[field.name]}
-                onChange={e => setForm({
-                  ...form, [field.name]: e.target.value
-                })}
-                required
+  if (!admin || admin.role !== "admin") return null;
+
+  const count = crops.length + prices.length + schemes.length + alerts.length;
+  const title =
+    sections.find((s) => s[0] === active)?.[2] || "Overview";
+
+  const Field = ({ name, label, type = "text", placeholder = "" }) => (
+    <label className="field">
+      <span>{label}</span>
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={form[name] || ""}
+        onChange={(e) =>
+          setForm({ ...form, [name]: e.target.value })
+        }
+      />
+    </label>
+  );
+
+  const TextField = ({ name, label, placeholder = "" }) => (
+    <label className="field">
+      <span>{label}</span>
+      <textarea
+        rows="3"
+        placeholder={placeholder}
+        value={form[name] || ""}
+        onChange={(e) =>
+          setForm({ ...form, [name]: e.target.value })
+        }
+      />
+    </label>
+  );
+
+  const Table = ({ headings, rows, onDelete }) => (
+    <div className="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {headings.map((h) => (
+              <th key={h}>{h}</th>
+            ))}
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.length ? (
+            rows.map((r) => (
+              <tr key={r.id || r.email}>
+                {r.cells.map((c, i) => (
+                  <td key={i}>{c}</td>
+                ))}
+                <td>
+                  <button
+                    className="text-danger"
+                    onClick={() => onDelete(r.id || r.email)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td
+                colSpan={headings.length + 1}
+                className="empty-cell"
               >
-                <option value="">Select {field.label}</option>
-                {field.options.map(option => (
-                  <option key={option} value={option}>{option}</option>
-                ))}
-              </select>
-            ) : field.multiline ? (
-              <textarea
-                placeholder={field.label}
-                value={form[field.name]}
-                onChange={e => setForm({
-                  ...form, [field.name]: e.target.value
-                })}
-                required
-              />
-            ) : (
-              <input
-                type={field.type || "text"}
-                placeholder={field.label}
-                min={field.type === "number" ? "0" : undefined}
-                value={form[field.name]}
-                onChange={e => setForm({
-                  ...form, [field.name]: e.target.value
-                })}
-                required
-              />
-            )}
-          </div>
-        ))}
-
-        <div className="form-actions">
-          <button className="primary-btn" type="submit">
-            {editId !== null ? "Update" : "Add"} {title}
-          </button>
-          {editId !== null && (
-            <button type="button" className="secondary-btn" onClick={resetForm}>
-              Cancel
-            </button>
+                Nothing here yet. Add your first record.
+              </td>
+            </tr>
           )}
-        </div>
-      </form>
-    );
-  }
-
-  function renderTable(title, data, columns) {
-    return (
-      <div className="table-section">
-        <h3>{title} ({data.length})</h3>
-
-        {data.length === 0 ? (
-          <p className="empty-message">No records available yet.</p>
-        ) : (
-          <div className="table-scroll">
-            <table className="management-table">
-              <thead>
-                <tr>
-                  {columns.map(c => <th key={c.key}>{c.label}</th>)}
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map(item => (
-                  <tr key={item.id}>
-                    {columns.map(c => (
-                      <td key={c.key}>
-                        {c.key === "price"
-                          ? "₹" + Number(item[c.key]).toLocaleString("en-IN")
-                          : item[c.key] || "-"}
-                      </td>
-                    ))}
-                    <td className="action-cell">
-                      <button className="edit-btn" onClick={() => editRecord(item)}>
-                        Edit
-                      </button>
-                      <button className="delete-btn" onClick={() => removeRecord(item.id)}>
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const titles = {
-    farmers: "Manage Farmers",
-    crops: "Manage Crops",
-    prices: "Manage Market Prices",
-    schemes: "Government Schemes",
-    alerts: "Farmer Alerts",
-    reports: "Dashboard Reports",
-    queries: "Expert Queries"
-  };
+        </tbody>
+      </table>
+    </div>
+  );
 
   return (
-    <div className="admin-layout">
+    <div className="admin-shell">
       <aside className="admin-sidebar">
-        <div className="sidebar-brand">
-          <span>🌱</span>
-          <div>
-            <h2>Farm Connect</h2>
-            <small>Admin Panel</small>
-          </div>
-        </div>
+        <Link to="/" className="admin-brand">
+          <span className="brand-mark">🌱</span>
+          <span>
+            Farm<span>Connect</span>
+            <small>ADMIN CONSOLE</small>
+          </span>
+        </Link>
+
+        <div className="sidebar-label">WORKSPACE</div>
 
         <nav>
-          {menus.map(([id, label, icon]) => (
+          {sections.map(([id, icon, label]) => (
             <button
               key={id}
-              className={section === id ? "sidebar-link active" : "sidebar-link"}
-              onClick={() => openSection(id)}
+              className={
+                active === id ? "side-link active" : "side-link"
+              }
+              onClick={() => {
+                setActive(id);
+                setNotice("");
+              }}
             >
-              <span>{label}</span>
+              <span>{icon}</span>
+              {label}
+              {active === id && <i />}
             </button>
           ))}
         </nav>
 
-        <button className="sidebar-logout" onClick={logout}>
-          Logout
-        </button>
+        <div className="sidebar-bottom">
+          <div className="admin-profile">
+            <div className="avatar">A</div>
+            <div>
+              <b>{admin.name}</b>
+              <small>Administrator</small>
+            </div>
+          </div>
+
+          <button className="side-link signout" onClick={signOut}>
+            ↪ <span>Sign out</span>
+          </button>
+        </div>
       </aside>
 
       <main className="admin-main">
         <header className="admin-topbar">
           <div>
-            <h1>{section === "dashboard" ? "Admin Dashboard" : titles[section]}</h1>
-            <p>Welcome back, {user.name || "Administrator"}!</p>
+            <span className="eyebrow">FARM CONNECT / ADMIN</span>
+            <h1>{title}</h1>
           </div>
-          <span className="admin-avatar">A</span>
+          <div className="topbar-right">
+            <span className="live-dot">● System ready</span>
+            <div className="avatar">A</div>
+          </div>
         </header>
 
-        {section === "dashboard" && (
-          <>
-            <div className="welcome-panel">
-              <h2>Growing Together, Growing Better 🌾</h2>
-              <p>Manage farmers, agricultural information and services from one place.</p>
-            </div>
+        <section className="admin-content">
+          {notice && <div className="notice">{notice}</div>}
 
-            <div className="stats-grid">
-              {[
-                ["Registered Farmers", farmers.length],
-                ["Available Crops", crops.length],
-                ["Market Prices", prices.length],
-                ["Government Schemes", schemes.length],
-                ["Farmer Alerts", alerts.length],
-                ["Expert Queries", queries.length]
-              ].map(([label, value]) => (
-                <div className="stat-card" key={label}>
-                  <p>{label}</p>
-                  <h2>{value}</h2>
+          {active === "overview" && (
+            <>
+              <div className="welcome-panel">
+                <div>
+                  <span className="welcome-tag">
+                    YOUR FARMING NETWORK
+                  </span>
+                  <h2>Good day, {admin.name} 👋</h2>
+                  <p>
+                    Here’s what’s happening across your Farm Connect
+                    platform.
+                  </p>
                 </div>
-              ))}
-            </div>
+                <div className="welcome-art">🌾</div>
+              </div>
 
-            <h2 className="section-heading">Management Features</h2>
-            <div className="feature-grid">
-              {menus.slice(1).map(([id, label]) => (
-                <button className="feature-card" key={id} onClick={() => openSection(id)}>
-                  <span className="feature-icon">🌿</span>
-                  <h3>{label}</h3>
-                  <p>Open and manage {label.toLowerCase()}.</p>
-                  <span className="feature-action">Manage →</span>
+              <div className="stat-grid">
+                {[
+                  [
+                    "Registered farmers",
+                    farmers.length,
+                    "♙",
+                    "Accounts in your network"
+                  ],
+                  [
+                    "Crop library",
+                    crops.length,
+                    "🌱",
+                    "Published crop guides"
+                  ],
+                  [
+                    "Market updates",
+                    prices.length,
+                    "₹",
+                    "Price records shared"
+                  ],
+                  [
+                    "Resources & alerts",
+                    schemes.length + alerts.length,
+                    "▤",
+                    "Schemes and announcements"
+                  ]
+                ].map(([label, value, icon, sub]) => (
+                  <article className="stat-card" key={label}>
+                    <div className="stat-icon">{icon}</div>
+                    <span>{label}</span>
+                    <strong>{value}</strong>
+                    <small>{sub}</small>
+                  </article>
+                ))}
+              </div>
+
+              <div className="overview-grid">
+                <section className="panel">
+                  <div className="panel-heading">
+                    <div>
+                      <h3>Platform activity</h3>
+                      <p>Published information at a glance</p>
+                    </div>
+                    <span className="soft-pill">ALL TIME</span>
+                  </div>
+
+                  {[
+                    ["Crop guides", crops.length],
+                    ["Market prices", prices.length],
+                    ["Government schemes", schemes.length],
+                    ["Farmer alerts", alerts.length]
+                  ].map(([label, value]) => (
+                    <div className="activity-row" key={label}>
+                      <span>{label}</span>
+                      <div className="activity-track">
+                        <i
+                          style={{
+                            width: `${
+                              count
+                                ? Math.max(
+                                    4,
+                                    (value / Math.max(count, 1)) * 100
+                                  )
+                                : 0
+                            }%`
+                          }}
+                        />
+                      </div>
+                      <b>{value}</b>
+                    </div>
+                  ))}
+                </section>
+
+                <section className="panel quick-panel">
+                  <div className="panel-heading">
+                    <div>
+                      <h3>Quick actions</h3>
+                      <p>Manage your platform</p>
+                    </div>
+                  </div>
+
+                  {sections.slice(1).map(([id, icon, label]) => (
+                    <button
+                      key={id}
+                      className="quick-action"
+                      onClick={() => setActive(id)}
+                    >
+                      <span>{icon}</span>
+                      {label}
+                      <b>→</b>
+                    </button>
+                  ))}
+                </section>
+              </div>
+
+              <section className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Recently registered farmers</h3>
+                    <p>Latest farmer accounts</p>
+                  </div>
+                  <button
+                    className="btn-secondary"
+                    onClick={() => setActive("farmers")}
+                  >
+                    View all →
+                  </button>
+                </div>
+
+                <Table
+                  headings={["Name", "Email", "Mobile"]}
+                  rows={farmers
+                    .slice(-5)
+                    .reverse()
+                    .map((f) => ({
+                      id: f.email,
+                      cells: [
+                        f.name,
+                        f.email,
+                        f.mobile || "—"
+                      ]
+                    }))}
+                  onDelete={removeFarmer}
+                />
+              </section>
+            </>
+          )}
+
+          {active === "farmers" && (
+            <section className="panel">
+              <div className="panel-heading">
+                <div>
+                  <h3>Farmer accounts</h3>
+                  <p>View and manage registered farmers.</p>
+                </div>
+                <span className="soft-pill">
+                  {farmers.length} TOTAL
+                </span>
+              </div>
+
+              <input
+                className="search-field"
+                placeholder="Search by farmer name or email..."
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+
+              <Table
+                headings={["Farmer", "Email address", "Mobile"]}
+                rows={filteredFarmers.map((f) => ({
+                  id: f.email,
+                  cells: [
+                    f.name,
+                    f.email,
+                    f.mobile || "—"
+                  ]
+                }))}
+                onDelete={removeFarmer}
+              />
+            </section>
+          )}
+
+          {active === "crops" && (
+            <>
+              <section className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Add a crop guide</h3>
+                    <p>
+                      Publish useful crop information for farmers.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <Field
+                    name="name"
+                    label="Crop name"
+                    placeholder="e.g. Rice"
+                  />
+                  <Field
+                    name="category"
+                    label="Category"
+                    placeholder="e.g. Cereal"
+                  />
+                  <Field
+                    name="season"
+                    label="Growing season"
+                    placeholder="e.g. Kharif"
+                  />
+                </div>
+
+                <TextField
+                  name="description"
+                  label="Description"
+                  placeholder="Add cultivation and care information..."
+                />
+
+                <button
+                  className="btn-primary"
+                  onClick={() =>
+                    saveRecord(
+                      "farmCrops",
+                      crops,
+                      setCrops,
+                      ["name", "category", "season", "description"]
+                    )
+                  }
+                >
+                  ＋ Publish crop guide
                 </button>
-              ))}
-            </div>
-          </>
-        )}
+              </section>
 
-        {section === "farmers" && (
-          <>
-            <p className="section-description">View and manage registered farmer accounts.</p>
-            <div className="table-section">
-              <h3>Registered Farmers ({farmers.length})</h3>
-              <div className="table-scroll">
-                <table className="management-table">
-                  <thead>
-                    <tr><th>Name</th><th>Email</th><th>Mobile</th><th>Action</th></tr>
-                  </thead>
-                  <tbody>
-                    {farmers.map(f => (
-                      <tr key={f.email}>
-                        <td>{f.name}</td>
-                        <td>{f.email}</td>
-                        <td>{f.mobile || "-"}</td>
-                        <td>
-                          <button className="delete-btn" onClick={() => removeFarmer(f.email)}>
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </>
-        )}
-
-        {section === "crops" && (
-          <>
-            {renderForm("Crop", [
-              { name: "name", label: "Crop Name" },
-              { name: "category", label: "Category", options: ["Food Crop", "Cash Crop", "Horticulture", "Plantation Crop"] },
-              { name: "season", label: "Season", options: ["Kharif", "Rabi", "Zaid", "All Seasons"] },
-              { name: "price", label: "Price per Quintal (₹)", type: "number" }
-            ])}
-            {renderTable("Crop List", crops, [
-              { key: "name", label: "Crop" },
-              { key: "category", label: "Category" },
-              { key: "season", label: "Season" },
-              { key: "price", label: "Price/Quintal" }
-            ])}
-          </>
-        )}
-
-        {section === "prices" && (
-          <>
-            {renderForm("Market Price", [
-              { name: "crop", label: "Crop Name" },
-              { name: "market", label: "Market / Location" },
-              { name: "price", label: "Price per Quintal (₹)", type: "number" },
-              { name: "date", label: "Price Date", type: "date" }
-            ])}
-            {renderTable("Market Price List", prices, [
-              { key: "crop", label: "Crop" },
-              { key: "market", label: "Market" },
-              { key: "price", label: "Price/Quintal" },
-              { key: "date", label: "Date" }
-            ])}
-          </>
-        )}
-
-        {section === "schemes" && (
-          <>
-            {renderForm("Scheme", [
-              { name: "title", label: "Scheme Name" },
-              { name: "description", label: "Scheme Description", multiline: true },
-              { name: "eligibility", label: "Eligibility Details", multiline: true }
-            ])}
-            {renderTable("Government Schemes", schemes, [
-              { key: "title", label: "Scheme" },
-              { key: "description", label: "Description" },
-              { key: "eligibility", label: "Eligibility" }
-            ])}
-          </>
-        )}
-
-        {section === "alerts" && (
-          <>
-            {renderForm("Alert", [
-              { name: "title", label: "Alert Title" },
-              { name: "message", label: "Announcement Message", multiline: true },
-              { name: "date", label: "Date", type: "date" }
-            ])}
-            {renderTable("Published Alerts", alerts, [
-              { key: "title", label: "Title" },
-              { key: "message", label: "Message" },
-              { key: "date", label: "Date" }
-            ])}
-          </>
-        )}
-
-        {section === "reports" && (
-          <div className="stats-grid reports-grid">
-            {[
-              ["Total Farmers", farmers.length],
-              ["Total Crops", crops.length],
-              ["Market Price Records", prices.length],
-              ["Government Schemes", schemes.length],
-              ["Published Alerts", alerts.length],
-              ["Expert Queries", queries.length],
-              ["Answered Queries", queries.filter(q => q.status === "Answered").length],
-              ["Pending Queries", queries.filter(q => q.status !== "Answered").length]
-            ].map(([label, value]) => (
-              <div className="stat-card" key={label}>
-                <p>{label}</p>
-                <h2>{value}</h2>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {section === "queries" && (
-          <div className="table-section">
-            <h3>Farmer Questions ({queries.length})</h3>
-            {queries.length === 0 ? (
-              <p className="empty-message">No expert queries submitted yet.</p>
-            ) : (
-              queries.map(q => (
-                <div className="query-card" key={q.id}>
-                  <h3>{q.subject}</h3>
-                  <p><b>Farmer:</b> {q.farmer}</p>
-                  <p>{q.message}</p>
-                  <p><b>Status:</b> {q.status || "Pending"}</p>
-                  {q.reply && <p><b>Previous Reply:</b> {q.reply}</p>}
-                  <form onSubmit={e => {
-                    e.preventDefault();
-                    replyToQuery(q.id);
-                  }}>
-                    <textarea
-                      placeholder="Write your reply"
-                      value={form.reply}
-                      onChange={e => setForm({ ...form, reply: e.target.value })}
-                      required
-                    />
-                    <button className="primary-btn">Send Reply</button>
-                  </form>
+              <section className="panel">
+                <div className="panel-heading">
+                  <h3>Published crop guides</h3>
+                  <span className="soft-pill">
+                    {crops.length} RECORDS
+                  </span>
                 </div>
-              ))
-            )}
-          </div>
-        )}
+
+                <Table
+                  headings={[
+                    "Crop",
+                    "Category",
+                    "Season",
+                    "Description"
+                  ]}
+                  rows={crops.map((x) => ({
+                    id: x.id,
+                    cells: [
+                      x.name,
+                      x.category,
+                      x.season,
+                      x.description
+                    ]
+                  }))}
+                  onDelete={(id) =>
+                    removeRecord(
+                      "farmCrops",
+                      crops,
+                      setCrops,
+                      id
+                    )
+                  }
+                />
+              </section>
+            </>
+          )}
+
+          {active === "prices" && (
+            <>
+              <section className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Add market price</h3>
+                    <p>
+                      Share a price record with farmers. Enter the
+                      source and date where possible.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="form-grid">
+                  <Field
+                    name="crop"
+                    label="Crop"
+                    placeholder="e.g. Tomato"
+                  />
+                  <Field
+                    name="market"
+                    label="Market / location"
+                    placeholder="e.g. Guntur market"
+                  />
+                  <Field
+                    name="price"
+                    label="Price (₹ per quintal)"
+                    type="number"
+                    placeholder="e.g. 2400"
+                  />
+                  <Field
+                    name="date"
+                    label="Price date"
+                    type="date"
+                  />
+                </div>
+
+                <button
+                  className="btn-primary"
+                  onClick={() =>
+                    saveRecord(
+                      "marketPrices",
+                      prices,
+                      setPrices,
+                      ["crop", "market", "price", "date"]
+                    )
+                  }
+                >
+                  ＋ Publish market price
+                </button>
+              </section>
+
+              <section className="panel">
+                <div className="panel-heading">
+                  <h3>Market price records</h3>
+                </div>
+
+                <Table
+                  headings={["Crop", "Market", "Price", "Date"]}
+                  rows={prices.map((x) => ({
+                    id: x.id,
+                    cells: [
+                      x.crop,
+                      x.market,
+                      `₹${x.price}`,
+                      x.date
+                    ]
+                  }))}
+                  onDelete={(id) =>
+                    removeRecord(
+                      "marketPrices",
+                      prices,
+                      setPrices,
+                      id
+                    )
+                  }
+                />
+              </section>
+            </>
+          )}
+
+          {active === "schemes" && (
+            <>
+              <section className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Publish a government scheme</h3>
+                    <p>
+                      Share scheme details and an official information link.
+                    </p>
+                  </div>
+                </div>
+
+                <Field
+                  name="name"
+                  label="Scheme name"
+                  placeholder="Scheme title"
+                />
+                <TextField
+                  name="description"
+                  label="Description"
+                  placeholder="Eligibility, benefits and application details..."
+                />
+                <Field
+                  name="eligibility"
+                  label="Eligibility"
+                  placeholder="Who can apply?"
+                />
+                <Field
+                  name="link"
+                  label="Official website link"
+                  placeholder="https://..."
+                />
+
+                <button
+                  className="btn-primary"
+                  onClick={() =>
+                    saveRecord(
+                      "farmSchemes",
+                      schemes,
+                      setSchemes,
+                      ["name", "description", "eligibility", "link"]
+                    )
+                  }
+                >
+                  ＋ Publish scheme
+                </button>
+              </section>
+
+              <section className="panel">
+                <div className="panel-heading">
+                  <h3>Published schemes</h3>
+                </div>
+
+                <Table
+                  headings={["Scheme", "Eligibility", "Description"]}
+                  rows={schemes.map((x) => ({
+                    id: x.id,
+                    cells: [
+                      x.name,
+                      x.eligibility,
+                      x.description
+                    ]
+                  }))}
+                  onDelete={(id) =>
+                    removeRecord(
+                      "farmSchemes",
+                      schemes,
+                      setSchemes,
+                      id
+                    )
+                  }
+                />
+              </section>
+            </>
+          )}
+
+          {active === "alerts" && (
+            <>
+              <section className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Create farmer alert</h3>
+                    <p>
+                      Publish an announcement visible on the farmer dashboard.
+                    </p>
+                  </div>
+                </div>
+
+                <Field
+                  name="title"
+                  label="Alert title"
+                  placeholder="e.g. Heavy rainfall advisory"
+                />
+                <TextField
+                  name="message"
+                  label="Alert message"
+                  placeholder="Write the announcement..."
+                />
+                <Field
+                  name="date"
+                  label="Date"
+                  type="date"
+                />
+
+                <button
+                  className="btn-primary"
+                  onClick={() =>
+                    saveRecord(
+                      "farmAlerts",
+                      alerts,
+                      setAlerts,
+                      ["title", "message", "date"]
+                    )
+                  }
+                >
+                  ＋ Publish alert
+                </button>
+              </section>
+
+              <section className="panel">
+                <div className="panel-heading">
+                  <h3>Published alerts</h3>
+                </div>
+
+                <Table
+                  headings={["Title", "Message", "Date"]}
+                  rows={alerts.map((x) => ({
+                    id: x.id,
+                    cells: [
+                      x.title,
+                      x.message,
+                      x.date
+                    ]
+                  }))}
+                  onDelete={(id) =>
+                    removeRecord(
+                      "farmAlerts",
+                      alerts,
+                      setAlerts,
+                      id
+                    )
+                  }
+                />
+              </section>
+            </>
+          )}
+
+          <footer className="admin-footer">
+            © 2026 Farm Connect · Agricultural information management
+          </footer>
+        </section>
       </main>
     </div>
   );
 }
-
-export default Admin;

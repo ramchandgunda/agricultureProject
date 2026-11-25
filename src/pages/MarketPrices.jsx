@@ -1,163 +1,91 @@
-
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-function MarketPrices() {
+export default function MarketPrices() {
+  const [prices, setPrices] = useState([]);
 
-  const crops = [
-    {
-      name: "🌾 Rice",
-      description: "Market information for rice.",
-      alert: "Rice market information selected"
-    },
-    {
-      name: "🌽 Maize",
-      description: "Market information for maize.",
-      alert: "Maize market information selected"
-    },
-    {
-      name: "🌱 Cotton",
-      description: "Market information for cotton.",
-      alert: "Cotton market information selected"
-    },
-    {
-      name: "🥜 Groundnut",
-      description: "Market information for groundnut.",
-      alert: "Groundnut market information selected"
-    }
-  ];
+  useEffect(() => {
+    const load = () => {
+      try {
+        setPrices(
+          JSON.parse(localStorage.getItem("marketPrices") || "[]")
+        );
+      } catch {
+        setPrices([]);
+      }
+    };
+
+    load();
+    window.addEventListener("focus", load);
+
+    return () => window.removeEventListener("focus", load);
+  }, []);
 
   return (
     <div className="container">
-
-      {/* HEADER */}
-
       <header className="header">
-
-        <div className="logo">
-
-          <img
-            src="/logo.jpeg"
-            alt="Farm Connect Logo"
-          />
-
+        <Link to="/" className="logo">
+          <img src="/logo.jpeg" alt="" />
           <div>
             <h2>Farm Connect</h2>
             <small>Farmer Friendly Portal</small>
           </div>
-
-        </div>
-
-        <div className="search">
-
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Search..."
-          />
-
-          <button id="searchBtn">
-            Search
-          </button>
-
-        </div>
+        </Link>
 
         <div className="account">
-
-          <Link to="/login">Login</Link>
-
-          <Link to="/register">Register</Link>
-
+          <Link to="/user">Dashboard</Link>
         </div>
-
       </header>
 
-
-      {/* CATEGORY MENU */}
-
       <nav className="categories">
-
-        <Link to="/">Home</Link>
-
+        <Link to="/user">Dashboard</Link>
         <Link to="/crop-guide">Crop Guide</Link>
-
         <Link to="/market-prices">Market Prices</Link>
-
-        <Link to="/government-schemes">
-          Government Schemes
-        </Link>
-
+        <Link to="/government-schemes">Schemes</Link>
         <Link to="/weather">Weather</Link>
-
-        <Link to="/expert-help">Expert Help</Link>
-
       </nav>
 
-
-      {/* MARKET PRICES */}
-
       <section className="dashboard">
-
-        <h1>💰 Market Prices</h1>
-
+        <h1>💰 Market price updates</h1>
         <p>
-          View sample agricultural market price information.
+          Price records published by the Farm Connect administrator.
+          Verify current prices with the market before selling.
         </p>
-
 
         <div className="dashboard-grid">
-
-          {crops.map((crop, index) => (
-
-            <div className="dashboard-card" key={index}>
-
-              <h3>{crop.name}</h3>
-
-              <p>
-                {crop.description}
-              </p>
-
-              <button
-                onClick={() => alert(crop.alert)}
-              >
-                View Price
-              </button>
-
-            </div>
-
+          {prices.map((p) => (
+            <article className="dashboard-card" key={p.id}>
+              <div className="card-icon">₹</div>
+              <h3>{p.crop}</h3>
+              <p>{p.market}</p>
+              <h2>
+                ₹{p.price}
+                <small> / quintal</small>
+              </h2>
+              <p>Updated: {p.date}</p>
+            </article>
           ))}
-
         </div>
 
+        {!prices.length && (
+          <div className="empty-state">
+            <span>₹</span>
+            <h3>No market records published yet</h3>
+            <p>
+              Market updates added by the administrator will appear here.
+            </p>
+          </div>
+        )}
 
-        <br />
-
-        <Link to="/">
-          <button>
-            ← Back to Home
-          </button>
+        <Link to="/user">
+          <button>← Back to dashboard</button>
         </Link>
-
       </section>
 
-
-      {/* FOOTER */}
-
       <footer className="footer">
-
         <h3>Farm Connect</h3>
-
-        <p>
-          Farmer Friendly Portal for useful agricultural information.
-        </p>
-
-        <p>
-          Copyright © 2026 FarmConnect
-        </p>
-
+        <p>Market information for informed farming decisions.</p>
       </footer>
-
     </div>
   );
 }
-
-export default MarketPrices;

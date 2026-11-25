@@ -1,168 +1,101 @@
-
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
-function GovernmentSchemes() {
+export default function GovernmentSchemes() {
+  const [schemes, setSchemes] = useState([]);
 
-  const schemes = [
-    {
-      title: "Farmer Support",
-      description:
-        "Information about financial and agricultural support available to farmers."
-    },
-    {
-      title: "Crop Insurance",
-      description:
-        "Information about crop insurance and protection against farming-related risks."
-    },
-    {
-      title: "Agricultural Support",
-      description:
-        "Information about agricultural development programs and support."
-    },
-    {
-      title: "Farmer Benefits",
-      description:
-        "Explore information about benefits and services available for farmers."
-    }
-  ];
+  useEffect(() => {
+    const load = () => {
+      try {
+        setSchemes(
+          JSON.parse(localStorage.getItem("farmSchemes") || "[]")
+        );
+      } catch {
+        setSchemes([]);
+      }
+    };
 
-  const handleLearnMore = (title) => {
-    alert(title + " selected");
-  };
+    load();
+    window.addEventListener("focus", load);
+
+    return () => window.removeEventListener("focus", load);
+  }, []);
 
   return (
     <div className="container">
-
-      {/* HEADER */}
-
       <header className="header">
-
-        <div className="logo">
-
-          <img
-            src="/logo.jpeg"
-            alt="Farm Connect Logo"
-          />
-
+        <Link to="/" className="logo">
+          <img src="/logo.jpeg" alt="" />
           <div>
             <h2>Farm Connect</h2>
             <small>Farmer Friendly Portal</small>
           </div>
-
-        </div>
-
-        <div className="search">
-
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Search..."
-          />
-
-          <button id="searchBtn">
-            Search
-          </button>
-
-        </div>
+        </Link>
 
         <div className="account">
-
-          <Link to="/login">Login</Link>
-
-          <Link to="/register">Register</Link>
-
+          <Link to="/user">Dashboard</Link>
         </div>
-
       </header>
 
-
-      {/* CATEGORY MENU */}
-
       <nav className="categories">
-
-        <Link to="/">Home</Link>
-
+        <Link to="/user">Dashboard</Link>
         <Link to="/crop-guide">Crop Guide</Link>
-
         <Link to="/market-prices">Market Prices</Link>
-
-        <Link to="/government-schemes">
-          Government Schemes
-        </Link>
-
+        <Link to="/government-schemes">Schemes</Link>
         <Link to="/weather">Weather</Link>
-
-        <Link to="/expert-help">Expert Help</Link>
-
       </nav>
 
-
-      {/* GOVERNMENT SCHEMES */}
-
       <section className="dashboard">
-
-        <h1>🏛️ Government Schemes</h1>
+        <h1>🏛️ Government schemes</h1>
 
         <p>
-          Explore information about government support and
-          agricultural schemes for farmers.
+          Explore agricultural support information shared by the
+          administrator. Always confirm eligibility and application
+          details on official government websites.
         </p>
-
 
         <div className="dashboard-grid">
+          {schemes.map((s) => (
+            <article className="dashboard-card" key={s.id}>
+              <div className="card-icon">📋</div>
+              <h3>{s.name}</h3>
+              <p>{s.description}</p>
+              <p><b>Eligibility:</b> {s.eligibility}</p>
 
-          {schemes.map((scheme, index) => (
-
-            <div className="dashboard-card" key={index}>
-
-              <h3>{scheme.title}</h3>
-
-              <p>
-                {scheme.description}
-              </p>
-
-              <button
-                onClick={() => handleLearnMore(scheme.title)}
-              >
-                Learn More
-              </button>
-
-            </div>
-
+              {s.link && (
+                <a
+                  href={s.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="scheme-link"
+                >
+                  Visit official information ↗
+                </a>
+              )}
+            </article>
           ))}
-
         </div>
 
+        {!schemes.length && (
+          <div className="empty-state">
+            <span>🏛️</span>
+            <h3>No schemes published yet</h3>
+            <p>
+              Government scheme information added by the administrator
+              will appear here.
+            </p>
+          </div>
+        )}
 
-        <br />
-
-        <Link to="/">
-          <button>
-            ← Back to Home
-          </button>
+        <Link to="/user">
+          <button>← Back to dashboard</button>
         </Link>
-
       </section>
 
-
-      {/* FOOTER */}
-
       <footer className="footer">
-
         <h3>Farm Connect</h3>
-
-        <p>
-          Farmer Friendly Portal for useful agricultural information.
-        </p>
-
-        <p>
-          Copyright © 2026 FarmConnect
-        </p>
-
+        <p>Verify all scheme details through official sources.</p>
       </footer>
-
     </div>
   );
 }
-
-export default GovernmentSchemes;

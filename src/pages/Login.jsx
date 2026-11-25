@@ -1,131 +1,116 @@
-
 import { useState } from "react";
-import { loginUser } from "../auth";
 import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../auth";
 import "./Auth.css";
 
-function Login() {
+export default function Login() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState("user");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
-  function handleSubmit(e) {
+  function submit(e) {
     e.preventDefault();
 
-    const user = loginUser(email, password, role);
+    const account = loginUser(email, password, role);
 
-    if (!user) {
-      alert("Invalid email, password or account type!");
+    if (!account) {
+      setError(
+        "We couldn't find an account with those details and account type."
+      );
       return;
     }
 
-    alert("Login successful!");
-
-    if (user.role === "admin") {
-      navigate("/admin");
-    } else {
-      navigate("/user");
-    }
+    navigate(
+      account.role === "admin" ? "/admin" : "/user",
+      { replace: true }
+    );
   }
 
   return (
-    <div className="auth-page">
-      <div className="auth-container">
-
+    <main className="auth-page">
+      <section className="auth-container">
         <div className="auth-banner">
-          <div className="auth-brand">
-            <span className="brand-icon">🌱</span>
-            <h2>Farm Connect</h2>
-          </div>
+          <Link to="/" className="auth-brand">
+            <span>🌱</span>
+            <b>Farm Connect</b>
+          </Link>
 
           <div className="banner-content">
-            <h1>Welcome Back!</h1>
+            <span className="welcome-tag">GROW WITH CONFIDENCE</span>
+            <h1>Welcome back to your farming community.</h1>
             <p>
-              Login to access your Farm Connect dashboard
-              and explore agricultural services.
+              Knowledge, tools and opportunities to help your farm
+              move forward.
             </p>
-
-            <div className="farm-illustration">
-              🌾 🚜 🌳
-            </div>
-
-            <h3>Growing Together, Growing Better.</h3>
+            <div className="farm-illustration">🌾　🚜　🌳</div>
+            <h3>Growing together, growing better.</h3>
           </div>
 
-          <p className="banner-footer">
-            Your trusted agricultural partner.
-          </p>
+          <small className="banner-footer">
+            A smarter way to stay connected to agriculture.
+          </small>
         </div>
 
         <div className="auth-form-section">
-          <div className="auth-form-content">
-
-            <h2>Login to Your Account</h2>
-
+          <form className="auth-form-content" onSubmit={submit}>
+            <span className="eyebrow">YOUR ACCOUNT</span>
+            <h2>Sign in</h2>
             <p className="auth-subtitle">
-              Select your account type to continue.
+              Enter your details to continue to Farm Connect.
             </p>
 
-            <form onSubmit={handleSubmit}>
+            <label>Sign in as</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="user">Farmer / User</option>
+              <option value="admin">Administrator</option>
+            </select>
 
-              {/* Account Type Selection */}
-              <label>Login As</label>
+            <label>Email address</label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
 
-              <select
-                className="account-type-select"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                required
-              >
-                <option value="user">🌱 Farmer / User</option>
-                <option value="admin">🛡️ Administrator</option>
-              </select>
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
 
-              {/* Email */}
-              <label>Email Address</label>
+            {error && <p className="form-error">{error}</p>}
 
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
+            <button className="auth-button" type="submit">
+              Sign in →
+            </button>
 
-              {/* Password */}
-              <label>Password</label>
-
-              <input
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-
-              <button type="submit" className="auth-button">
-                Login →
-              </button>
-
-            </form>
+            {role === "admin" && (
+              <p className="demo-hint">
+                Demo administrator: admin@farmconnect.com · Admin@123
+              </p>
+            )}
 
             <p className="auth-switch">
-              Don't have an account?{" "}
-              <Link to="/register">Create Account</Link>
+              New to Farm Connect? <Link to="/register">Create an account</Link>
             </p>
 
             <Link to="/" className="back-home">
-              ← Back to Home
+              ← Back to home
             </Link>
-
-          </div>
+          </form>
         </div>
-
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
-
-export default Login;

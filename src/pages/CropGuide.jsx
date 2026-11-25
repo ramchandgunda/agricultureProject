@@ -1,6 +1,24 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-function CropGuide() {
+export default function CropGuide() {
+  const [publishedCrops, setPublishedCrops] = useState([]);
+
+  useEffect(() => {
+    const load = () => {
+      try {
+        setPublishedCrops(
+          JSON.parse(localStorage.getItem("farmCrops") || "[]")
+        );
+      } catch {
+        setPublishedCrops([]);
+      }
+    };
+
+    load();
+    window.addEventListener("focus", load);
+    return () => window.removeEventListener("focus", load);
+  }, []);
 
   const crops = [
     {
@@ -51,173 +69,91 @@ function CropGuide() {
 
   return (
     <div className="container">
-
-      {/* HEADER */}
-
       <header className="header">
-
         <div className="logo">
-
-          <img
-            src="/logo.jpeg"
-            alt="Farm Connect Logo"
-          />
-
+          <img src="/logo.jpeg" alt="Farm Connect Logo" />
           <div>
             <h2>Farm Connect</h2>
             <small>Farmer Friendly Portal</small>
           </div>
-
         </div>
 
         <div className="search">
-
-          <input
-            type="text"
-            id="searchInput"
-            placeholder="Search..."
-          />
-
-          <button id="searchBtn">
-            Search
-          </button>
-
+          <input type="text" id="searchInput" placeholder="Search..." />
+          <button id="searchBtn">Search</button>
         </div>
 
         <div className="account">
-
-          <Link to="/login">
-            Login
-          </Link>
-
-          <Link to="/register">
-            Register
-          </Link>
-
+          <Link to="/login">Login</Link>
+          <Link to="/register">Register</Link>
         </div>
-
       </header>
 
-
-      {/* MENU */}
-
       <nav className="categories">
-
         <Link to="/">Home</Link>
-
         <Link to="/crop-guide">Crop Guide</Link>
-
         <Link to="/market-prices">Market Prices</Link>
-
         <Link to="/government-schemes">Government Schemes</Link>
-
         <Link to="/weather">Weather</Link>
-
         <Link to="/expert-help">Expert Help</Link>
-
       </nav>
 
-
-      {/* PAGE TITLE */}
-
       <section className="product-title">
-
         <h2>🌱 CROP GUIDE</h2>
-
-        <p>
-          Useful crop information and basic farming guidance
-        </p>
-
+        <p>Useful crop information and basic farming guidance</p>
       </section>
-
-
-      {/* CROP INFORMATION */}
 
       <section className="products">
-
-        {crops.map((crop, index) => (
-
-          <div className="product" key={index}>
-
-            <div className="card-icon">
-              {crop.icon}
-            </div>
-
+        {crops.map((crop) => (
+          <div className="product" key={crop.name}>
+            <div className="card-icon">{crop.icon}</div>
             <h3>{crop.name}</h3>
-
-            <p>
-              <b>Soil:</b> {crop.soil}
-            </p>
-
-            <p>
-              <b>Sowing:</b> {crop.sowing}
-            </p>
-
-            <p>
-              <b>Water:</b> {crop.water}
-            </p>
-
-            <p>
-              <b>Care:</b> {crop.care}
-            </p>
-
-            <p>
-              <b>Harvest:</b> {crop.harvest}
-            </p>
-
+            <p><b>Soil:</b> {crop.soil}</p>
+            <p><b>Sowing:</b> {crop.sowing}</p>
+            <p><b>Water:</b> {crop.water}</p>
+            <p><b>Care:</b> {crop.care}</p>
+            <p><b>Harvest:</b> {crop.harvest}</p>
           </div>
-
         ))}
-
       </section>
 
+      {publishedCrops.length > 0 && (
+        <section className="dashboard">
+          <h2>🌿 Crop guides published by Farm Connect</h2>
+          <p>Additional crop information shared by the administrator.</p>
 
-      {/* GENERAL GUIDANCE */}
+          <div className="dashboard-grid">
+            {publishedCrops.map((crop) => (
+              <article className="dashboard-card" key={crop.id}>
+                <div className="card-icon">🌱</div>
+                <h3>{crop.name}</h3>
+                <p><b>Category:</b> {crop.category}</p>
+                <p><b>Season:</b> {crop.season}</p>
+                <p>{crop.description}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="offers">
-
         <h2>🌱 General Crop Guidance</h2>
-
         {guidance.map((item, index) => (
-
-          <p key={index}>
-            {item}
-          </p>
-
+          <p key={index}>{item}</p>
         ))}
-
       </section>
-
-
-      {/* BACK BUTTON */}
 
       <section className="product-title">
-
-        <Link to="/">
-          <button>← Back to Home</button>
+        <Link to="/user">
+          <button>← Back to Dashboard</button>
         </Link>
-
       </section>
 
-
-      {/* FOOTER */}
-
       <footer className="footer">
-
         <h2>FarmConnect</h2>
-
-        <p>
-          Farmer-friendly agricultural information in one place.
-        </p>
-
-        <p>
-          Copyright © 2026 FarmConnect
-        </p>
-
+        <p>Farmer-friendly agricultural information in one place.</p>
+        <p>Copyright © 2026 FarmConnect</p>
       </footer>
-
     </div>
   );
 }
-
-export default CropGuide;
